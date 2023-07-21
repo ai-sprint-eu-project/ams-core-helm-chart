@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ai-sprint-monit-manager
+subjects:
+  - kind: ServiceAccount
+    name: ai-sprint-monit-manager
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: ai-sprint-monit-manager
+  apiGroup: rbac.authorization.k8s.io

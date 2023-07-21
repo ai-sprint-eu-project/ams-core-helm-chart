@@ -1,0 +1,387 @@
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+kubeVersion: ""
+nameOverride: ""
+fullnameOverride: ""
+clusterDomain: cluster.local
+commonAnnotations: {}
+commonLabels: {}
+extraDeploy: []
+diagnosticMode:
+  enabled: false
+  command:
+    - sleep
+  args:
+    - infinity
+image:
+  registry: docker.io
+  repository: bitnami/influxdb
+  tag: 2.2.0-debian-10-r0
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  debug: false
+architecture: standalone
+auth:
+  enabled: true
+  usePasswordFiles: false
+  admin:
+    username: admin
+    password: ""
+    token: ""
+    org: primary
+    bucket: primary
+  createUserToken: false
+  user:
+    username: ""
+    password: ""
+    org: ""
+    bucket: ""
+  readUser:
+    username: ""
+    password: ""
+  writeUser:
+    username: ""
+    password: ""
+  existingSecret: ""
+influxdb:
+  configuration: ""
+  existingConfiguration: ""
+  initdbScripts: {}
+  initdbScriptsCM: ""
+  initdbScriptsSecret: ""
+  replicaCount: 1
+  podAffinityPreset: ""
+  podAntiAffinityPreset: soft
+  nodeAffinityPreset:
+    type: ""
+    key: ""
+    values: []
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists
+  nodeSelector: {}
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+  podAnnotations: {}
+  podLabels: {}
+  hostAliases: []
+  updateStrategy:
+    type: RollingUpdate
+  priorityClassName: ""
+  schedulerName: ""
+  topologySpreadConstraints: []
+  podManagementPolicy: OrderedReady
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+  resources:
+    limits: {}
+    requests: {}
+  command: []
+  args: []
+  lifecycleHooks: {}
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  extraVolumes: []
+  extraVolumeMounts: []
+  containerPorts:
+    http: 8086
+    rpc: 8088
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 180
+    periodSeconds: 45
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 6
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 180
+    periodSeconds: 45
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 6
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 60
+    periodSeconds: 45
+    timeoutSeconds: 30
+    successThreshold: 1
+    failureThreshold: 6
+  customStartupProbe: {}
+  customLivenessProbe: {}
+  customReadinessProbe: {}
+  sidecars: []
+  initContainers: []
+  service:
+    type: ClusterIP
+    ports:
+      http: 8086
+      rpc: 8088
+    nodePorts:
+      http: ""
+      rpc: ""
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    clusterIP: ""
+    externalTrafficPolicy: Cluster
+    extraPorts: []
+    annotations: {}
+    sessionAffinity: None
+    sessionAffinityConfig: {}
+relay:
+  image:
+    registry: docker.io
+    repository: bitnami/influxdb-relay
+    tag: 0.20200717.0-scratch-r18
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+  configuration: |-
+    [[http]]
+    name = "relay-server"
+    bind-addr = "0.0.0.0:9096"
+    output = [
+        {{- $influxdbReplicaCount := int .Values.influxdb.replicaCount }}
+        {{- $influxdbFullname := include "common.names.fullname" . }}
+        {{- $influxdbHeadlessServiceName := printf "%s-headless" (include "common.names.fullname" .) }}
+        {{- $releaseName := .Release.Namespace }}
+        {{- $clusterDomain:= .Values.clusterDomain }}
+        {{- range $e, $i := until $influxdbReplicaCount }}
+        { name="{{ $influxdbFullname }}-{{ $i }}", location="http://{{ $influxdbFullname }}-{{ $i }}.{{ $influxdbHeadlessServiceName }}.{{ $releaseName }}.svc.{{ $clusterDomain }}:8086/write", timeout="10s"},
+        {{- end }}
+    ]
+  existingConfiguration: ""
+  replicaCount: 1
+  updateStrategy:
+    type: RollingUpdate
+  podAnnotations: {}
+  podLabels: {}
+  hostAliases: []
+  podAffinityPreset: ""
+  podAntiAffinityPreset: soft
+  nodeAffinityPreset:
+    type: ""
+    key: ""
+    values: []
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  priorityClassName: ""
+  schedulerName: ""
+  topologySpreadConstraints: []
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1001
+  containerSecurityContext:
+    enabled: true
+    runAsUser: 1001
+    runAsNonRoot: true
+  resources:
+    limits: {}
+    requests: {}
+  command: []
+  args: []
+  lifecycleHooks: {}
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  extraVolumes: []
+  extraVolumeMounts: []
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 6
+  customStartupProbe: {}
+  customLivenessProbe: {}
+  customReadinessProbe: {}
+  containerPorts:
+    http: 9096
+  sidecars: []
+  initContainers: []
+  service:
+    type: ClusterIP
+    ports:
+      http: 9096
+    nodePorts:
+      http: ""
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    clusterIP: ""
+    annotations: {}
+    externalTrafficPolicy: Cluster
+    extraPorts: []
+    sessionAffinity: None
+    sessionAffinityConfig: {}
+collectd:
+  enabled: false
+  service:
+    type: ClusterIP
+    port: 25826
+    nodePort: ""
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    clusterIP: ""
+    externalTrafficPolicy: Cluster
+    extraPorts: []
+    annotations: {}
+    sessionAffinity: None
+    sessionAffinityConfig: {}
+ingress:
+  enabled: false
+  tls: false
+  pathType: ImplementationSpecific
+  apiVersion: ""
+  hostname: influxdb.local
+  path: /
+  annotations: {}
+  extraHosts: []
+  extraPaths: []
+  extraTls: []
+  secrets: []
+  ingressClassName: ""
+metrics:
+  enabled: false
+  service:
+    type: ClusterIP
+    port: 9122
+    nodePort: ""
+    loadBalancerIP: ""
+    loadBalancerSourceRanges: []
+    clusterIP: ""
+    annotations:
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "{{ .Values.metrics.service.port }}"
+      prometheus.io/path: "/metrics"
+    externalTrafficPolicy: Cluster
+    extraPorts: []
+    sessionAffinity: None
+    sessionAffinityConfig: {}
+  serviceMonitor:
+    enabled: false
+    namespace: ""
+    interval: ""
+    scrapeTimeout: ""
+    relabelings: []
+    metricRelabelings: []
+    selector: {}
+    honorLabels: false
+networkPolicy:
+  enabled: false
+  allowExternal: true
+persistence:
+  enabled: true
+  existingClaim: ""
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 8Gi
+  annotations: {}
+serviceAccount:
+  enabled: false
+  name: ""
+psp:
+  create: false
+rbac:
+  create: false
+volumePermissions:
+  enabled: false
+  image:
+    registry: docker.io
+    repository: bitnami/bitnami-shell
+    tag: 10-debian-10-r392
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+  securityContext:
+    runAsUser: 0
+backup:
+  enabled: false
+  directory: "/backups"
+  retentionDays: 10
+  cronjob:
+    schedule: "0 2 * * *"
+    historyLimit: 1
+    podAnnotations: {}
+    securityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+  podAffinityPreset: ""
+  podAntiAffinityPreset: soft
+  nodeAffinityPreset:
+    type: ""
+    key: ""
+    values: []
+  affinity: {}
+  nodeSelector: {}
+  tolerations: []
+  uploadProviders:
+    google:
+      enabled: false
+      secret: ""
+      secretKey: "key.json"
+      existingSecret: ""
+      bucketName: "gs://bucket/influxdb"
+      image:
+        registry: docker.io
+        repository: bitnami/google-cloud-sdk
+        tag: 0.380.0-debian-10-r5
+        pullPolicy: IfNotPresent
+        pullSecrets: []
+    azure:
+      enabled: false
+      secret: ""
+      secretKey: "connection-string"
+      existingSecret: ""
+      containerName: "influxdb-container"
+      image:
+        registry: docker.io
+        repository: bitnami/azure-cli
+        tag: 2.35.0-debian-10-r5
+        pullPolicy: IfNotPresent
+        pullSecrets: []
+    aws:
+      enabled: false
+      accessKeyID: ""
+      secretAccessKey: ""
+      region: "us-east-1"
+      existingSecret: ""
+      bucketName: "s3://bucket/influxdb"
+      image:
+        registry: docker.io
+        repository: bitnami/aws-cli
+        tag: 2.4.7-debian-10-r4
+        pullPolicy: IfNotPresent
+        pullSecrets: []

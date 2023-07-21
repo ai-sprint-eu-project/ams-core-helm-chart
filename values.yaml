@@ -1,0 +1,64 @@
+registryCredentialsSecret: registry-credentials
+
+influxdb:
+  fullnameOverride: ai-sprint-monit-influxdb
+  persistence:
+    enabled: true
+    size: 10Gi
+    existingClaim: influxdb-pvc
+  ingress:
+    enabled: true
+    hostname: influxdb.ai-sprint.local
+      
+telegraf-ds:
+  fullnameOverride: ai-sprint-monit-telegraf-ds
+  nodeSelector:
+    do-not: schedule-pods
+  env:
+    - name: INFLUX_TOKEN
+      valueFrom:
+        configMapKeyRef:
+          name: influxdb-cm
+          key: monitToken
+    - name: NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
+  override_config:
+    toml: "## ai-sprint-monitoring.conf"
+  args:
+    - '--config'
+    - '/etc/telegraf/ai-sprint-monitoring.conf'
+
+grafana:
+  fullnameOverride: ai-sprint-monit-grafana
+  nodeSelector:
+    do-not: schedule-pods
+  ingress:
+    enabled: true
+    hosts:
+      - grafana.ai-sprint.local
+  envValueFrom:
+    INFLUX_TOKEN:
+      configMapKeyRef:
+        name: influxdb-cm
+        key: monitToken
+  persistence:
+    enabled: true
+    size: 10Gi
+    existingClaim: grafana-pvc        
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: InfluxDB_v2_Flux
+          type: influxdb
+          access: proxy
+          url: http://ai-sprint-monit-influxdb:8086
+          secureJsonData:
+            token: $INFLUX_TOKEN
+          jsonData:
+            version: Flux
+            organization: ai-sprint
+            defaultBucket: ai-sprint-monit
+            tlsSkipVerify: true

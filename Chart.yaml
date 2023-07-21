@@ -1,0 +1,14 @@
+apiVersion: v2
+name: AMS-core
+version: '1.0'
+description: AI-SPRINT Monitoring Subsystem (AMS) core
+authors:
+  - name: Michał Soczewka
+    email: msoczewka@7bulls.com
+maintainers:
+  - name: Michał Soczewka
+    email: msoczewka@7bulls.com
+dependencies:
+  - name: influxdb
+  - name: telegraf-ds
+  - name: grafana

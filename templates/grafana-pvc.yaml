@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.grafana.persistence.existingClaim }}
+  labels:
+    app.kubernetes.io/component: grafana
+spec:
+  storageClassName: {{ .Values.pvcStorageClassName }}
+  accessModes:
+  {{- range .Values.grafana.persistence.accessModes }}
+    - {{ . | quote }}
+  {{- end }}
+  resources:
+      requests:
+        storage: {{ .Values.grafana.persistence.size }}

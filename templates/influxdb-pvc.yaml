@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.influxdb.persistence.existingClaim }}
+  labels:
+    app.kubernetes.io/component: influxdb
+spec:
+  storageClassName: {{ .Values.pvcStorageClassName }}
+  accessModes:
+  {{- range .Values.influxdb.persistence.accessModes }}
+    - {{ . | quote }}
+  {{- end }}
+  resources:
+      requests:
+        storage: {{ .Values.influxdb.persistence.size }}

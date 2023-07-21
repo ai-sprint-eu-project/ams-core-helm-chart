@@ -1,0 +1,70 @@
+image:
+  repo: "telegraf"
+  tag: "1.22-alpine"
+  pullPolicy: IfNotPresent
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 0.1
+  limits:
+    memory: 2Gi
+    cpu: 1
+args: []
+env:
+  - name: HOSTNAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: HOSTIP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.hostIP
+  - name: "HOST_PROC"
+    value: "/hostfs/proc"
+  - name: "HOST_SYS"
+    value: "/hostfs/sys"
+  - name: "HOST_MOUNT_PREFIX"
+    value: "/hostfs"
+tolerations:
+  - key: node-role.kubernetes.io/control-plane
+    operator: Exists
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/master
+    operator: Exists
+    effect: NoSchedule
+rbac:
+  create: true
+serviceAccount:
+  create: true
+  annotations: {}
+podSecurityContext: {}
+override_config:
+  toml: ~
+config:
+  agent:
+    interval: "10s"
+    round_interval: true
+    metric_batch_size: 1000
+    metric_buffer_limit: 10000
+    collection_jitter: "0s"
+    flush_interval: "10s"
+    flush_jitter: "0s"
+    precision: ""
+    debug: false
+    quiet: false
+    logfile: ""
+    hostname: "$HOSTNAME"
+    omit_hostname: false
+  outputs:
+    - influxdb:
+        urls:
+          - "http://influxdb.monitoring.svc:8086"
+        database: "telegraf"
+        retention_policy: ""
+        timeout: "5s"
+        username: ""
+        password: ""
+        user_agent: "telegraf"
+        insecure_skip_verify: false
+  monitor_self: false
+  docker_endpoint: "unix:///var/run/docker.sock"

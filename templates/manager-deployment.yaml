@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-sprint-monit-manager
+  labels:
+    app: ai-sprint-monit-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-sprint-monit-manager
+  template:
+    metadata:
+      labels:
+        app: ai-sprint-monit-manager
+    spec:
+      serviceAccountName: ai-sprint-monit-manager
+      containers:
+        - name: ai-sprint-monit-manager
+          image: registry.gitlab.polimi.it/ai-sprint/monitoring-subsystem/ai-sprint-monit-manager:latest
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: node-role.kubernetes.io/control-plane
+                  operator: Exists
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+      imagePullSecrets: 
+        - name: {{ .Values.registryCredentialsSecret }}
